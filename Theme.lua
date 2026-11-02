@@ -430,7 +430,8 @@ function T:CloseButton(parent)
     if self.skin ~= "C" then
         local close = CreateFrame("Button", nil, parent, "UIPanelCloseButtonNoScripts")
         close:SetSize(24, 24)
-        -- Forever's Camelot UIPanelCloseButtonDefaultAnchorsMixin: border TOPRIGHT (-2, 1).
+        -- Our own placement (border TOPRIGHT -2, 1). Forever 70532 moved the native
+        -- Camelot close button to border TOPRIGHT (0, 3) at 28px; see the review notes.
         close:SetPoint("TOPRIGHT", -4, -15)
         return close
     end

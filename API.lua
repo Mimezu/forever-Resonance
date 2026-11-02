@@ -32,6 +32,7 @@ function R:SpellIdentity(id)
 end
 
 -- Full action details, including the channel check that needs tooltip data.
+local TOOLTIP_FIELDS = { "leftText", "rightText" }
 function R:SpellInfo(id)
     local name, rank, ranked, icon, castTime = self:SpellIdentity(id)
     if not name then return end
@@ -40,7 +41,7 @@ function R:SpellInfo(id)
     local channelLabel = SPELL_CAST_CHANNELED or "Channeled"
     if tooltip and self.Safe(tooltip) and tooltip.lines then
         for _, line in ipairs(tooltip.lines) do
-            for _, field in ipairs({ "leftText", "rightText" }) do
+            for _, field in ipairs(TOOLTIP_FIELDS) do
                 local text = line[field]
                 if self.Safe(text) and type(text) == "string" and text:find(channelLabel, 1, true) then
                     mode = "channel"

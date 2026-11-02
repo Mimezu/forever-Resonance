@@ -1,3 +1,12 @@
+# 2.0.0-forever.12
+
+Review for the live client (build 70707):
+
+- Closing a window with Escape no longer leaves keyboard propagation off. Before, a window closed with Escape and then reopened in combat (where the combat guard skips the reset) swallowed every key until combat ended.
+- The channel check reuses one field list instead of building a table per tooltip line.
+- Catalog.lua no longer computes search text that BuildLibrary overwrote at load.
+- README: removed the stale save-bridge section from the beta installation; tests run with `lua5.1`.
+
 # 2.0.0-forever.11
 
 Layout and polish (all styles):

@@ -54,10 +54,11 @@ for _, method in ipairs({ "SetBackdrop", "SetBackdropColor", "SetBackdropBorderC
     "SetFocus", "HighlightText", "SetFrameStrata", "EnableMouse", "EnableMouseWheel", "SetClampedToScreen", "ClearAllPoints",
     "SetMovable", "SetScale", "RegisterForDrag", "StartMoving", "StopMovingOrSizing", "SetMultiLine", "SetFontObject",
     "RegisterEvent", "RegisterUnitEvent", "UnregisterEvent", "SetTextColor", "SetHorizTile", "SetAtlas",
-    "SetWordWrap", "SetMaxLines", "SetSpacing", "EnableKeyboard", "SetPropagateKeyboardInput",
+    "SetWordWrap", "SetMaxLines", "SetSpacing", "EnableKeyboard",
     "SetDesaturated", "SetRotation", "SetTexCoord", "SetVertTile", "SetVertexColor", "SetJustifyV" }) do
     Methods[method] = function() end
 end
+function Methods:SetPropagateKeyboardInput(value) self.propagate = value end
 function Methods:SetAlpha(alpha) self.alpha = alpha end
 function Methods:GetParent() return self.parent end
 function Methods:IsEnabled() return self.enabled ~= false end
@@ -81,6 +82,16 @@ UIParent = make("Frame"); UIParent:SetSize(1920, 1080)
 BackdropTemplateMixin = {}
 ChatFontNormal = {}
 SlashCmdList = {}
+-- Timers never fire on their own; the test runs After callbacks when it wants to.
+local pendingTimers = {}
+C_Timer = {
+    After = function(_, fn) pendingTimers[#pendingTimers + 1] = fn end,
+    NewTimer = function(_, fn)
+        local timer = { fn = fn }
+        function timer:Cancel() self.cancelled = true end
+        return timer
+    end,
+}
 GetTime = function() return 0 end
 InCombatLockdown = function() return false end
 UnitFullName = function() return "UITester", "Realm" end
@@ -105,6 +116,10 @@ R.UI.main.scripts.OnKeyDown(R.UI.main, "P")
 assert(R.UI.main:IsShown(), "spellbook key must leave editor open")
 R.UI.main.scripts.OnKeyDown(R.UI.main, "ESCAPE")
 assert(not R.UI.main:IsShown(), "local Escape closes editor")
+assert(R.UI.main.propagate == false, "the closing Escape itself is consumed")
+for _, fn in ipairs(pendingTimers) do fn() end
+pendingTimers = {}
+assert(R.UI.main.propagate == true, "propagation is restored right after closing, so a reopen in combat cannot swallow keys")
 R:ToggleUI()
 local card = R:AddAction({ kind = "spell", spellID = 100, name = "Fireball", ranked = true, rank = "Rank 1", mode = "casting", icon = 134400 })
 R:AddAction({ kind = "spell", spellID = 101, name = "Fireball", ranked = true, rank = "Rank 2", mode = "casting", icon = 134400 })

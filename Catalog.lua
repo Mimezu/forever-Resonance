@@ -1193,8 +1193,7 @@ for _, sound in ipairs(catalog) do
             break
         end
     end
-    sound.searchText = string.lower((sound.label or "") .. " " .. (sound.detail or "")
-        .. " " .. (sound.source or "") .. " " .. (sound.instance or ""))
+    -- Search text is built by Library.lua (BuildLibrary) from the final labels.
 end
 
 ns.SoundCatalog = catalog

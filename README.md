@@ -1,6 +1,6 @@
 # Resonance for Forever
 
-Version 2.0.0-forever.11 · client interface 16001
+Version 2.0.0-forever.12 · client interface 16001
 
 ## Automatic saving
 
@@ -56,11 +56,9 @@ Usable items are resolved to their activation spell. When the client reports tha
 
 Playback listens to the player's cast events, not other players or pet autocasts. The addon does not replace native audio or execute the dropped action. A sound set supports 200 actions, 40 sections, and 16 sound layers per moment.
 
-## Persistence on this installation
+## Persistence
 
-`ResonanceForeverDB` is an account saved variable, partitioned by character name/realm. The `_SavedVariables.local` junction points to this installation's account SavedVariables directory. Its TOC entry reads `Resonance.lua` to work around the Forever beta save-loader issue. The bridge was created on September 19 at 18:26:43, after an initial reload at 18:26:04 reported it missing. The link now resolves to the existing saved setup.
-
-Do not recursively delete or distribute the junction. For another installation with a working save loader, omit the bridge TOC line and junction. For another affected Forever installation, configure a local bridge to that account's save folder. Retail's `ResonanceDB` and Retail addon files are not modified.
+`ResonanceForeverDB` is an account saved variable, partitioned by character name/realm, stored through the client's native SavedVariables. Retail's `ResonanceDB` and Retail addon files are not modified.
 
 ## Commands
 
@@ -72,11 +70,12 @@ Do not recursively delete or distribute the junction. For another installation w
 
 ## Verification
 
-From the client root:
+From the client root, with Lua 5.1:
 
 ```
-lua Interface/AddOns/Resonance/tests/Behavior.lua
-lua Interface/AddOns/Resonance/tests/UI.lua
+lua5.1 Interface/AddOns/Resonance/tests/Behavior.lua
+lua5.1 Interface/AddOns/Resonance/tests/UI.lua
+lua5.1 Interface/AddOns/Resonance/tests/Scheduler.lua
 ```
 
 Behavior checks cover rank discovery/inheritance/overrides, cursor interpretation, passive and item rejection, trigger conflicts, player-only event dispatch, delays, interruption, channel stop, late events, duplicate success events, secret values, playback results, sound filtering, set round trips, invalid imports, backups, and character separation. UI mocks exercise construction, sound assignment, rank edits, previews, set sharing, removal/undo, filters, reopening, and reuse of pooled frames. Lua 5.1 syntax is checked for all shipped Lua files. These checks don't replace live visual, audible, and reload validation.

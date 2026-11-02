@@ -34,15 +34,20 @@ local function frame(parent, width, height, style, name)
     -- spellbook to drag an action. Handle Escape locally instead.
     if name then
         f:EnableKeyboard(true)
-        f:SetPropagateKeyboardInput(true)
-        f:SetScript("OnShow", function(self)
-            if not InCombatLockdown or not InCombatLockdown() then self:SetPropagateKeyboardInput(true) end
-        end)
+        -- SetPropagateKeyboardInput is blocked for addons in combat.
+        local function propagate(self)
+            if not (InCombatLockdown and InCombatLockdown()) then self:SetPropagateKeyboardInput(true) end
+        end
+        propagate(f)
+        f:SetScript("OnShow", propagate)
         f:SetScript("OnKeyDown", function(self, key)
             if InCombatLockdown and InCombatLockdown() then return end
             self:SetPropagateKeyboardInput(key ~= "ESCAPE")
             if key == "ESCAPE" then
                 self:Hide()
+                -- Consume only this Escape. Left at false, a window reopened in
+                -- combat (where OnShow cannot reset it) would swallow every key.
+                if C_Timer and C_Timer.After then C_Timer.After(0, function() propagate(self) end) end
             end
         end)
     end
