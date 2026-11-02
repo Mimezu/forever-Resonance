@@ -1,0 +1,22 @@
+## Interface: 16001
+## Title: Resonance
+## Notes: Drag in actions and build your own layered spell sounds.
+## Author: Mimezu
+## Version: 2.0.0-forever.11
+## SavedVariables: ResonanceForeverDB
+## LoadSavedVariablesFirst: 1
+# Settings load through native SavedVariables.
+## IconTexture: Interface\AddOns\Resonance\Assets\ResonanceIcon
+## Category: Mimezu's Suite
+## Group: Mimezu_Audio
+
+Model.lua
+API.lua
+BossVoices.lua
+Catalog.lua
+Library.lua
+Audio.lua
+Sharing.lua
+Theme.lua
+UI.lua
+Core.lua
