@@ -1,6 +1,10 @@
 # Resonance for Forever
 
-Version 2.0.0-forever.12 · client interface 16001
+Version 2.1.0-forever.13 · client interface 16001
+
+## Opening
+
+`/res`, the minimap icon, a key (**Settings** in the toolbar, or Esc > Options > AddOns > Resonance).
 
 ## Automatic saving
 

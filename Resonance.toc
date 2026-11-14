@@ -2,7 +2,7 @@
 ## Title: Resonance
 ## Notes: Drag in actions and build your own layered spell sounds.
 ## Author: Mimezu
-## Version: 2.0.0-forever.12
+## Version: 2.1.0-forever.13
 ## SavedVariables: ResonanceForeverDB
 ## LoadSavedVariablesFirst: 1
 # Settings load through native SavedVariables.
@@ -18,4 +18,5 @@ Audio.lua
 Sharing.lua
 Theme.lua
 UI.lua
+Options.lua
 Core.lua

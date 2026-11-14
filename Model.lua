@@ -1,6 +1,6 @@
 local _, R = ...
 _G.ResonanceForever = R
-R.VERSION = "2.0.0-forever.12"
+R.VERSION = "2.1.0-forever.13"
 R.Moments = { "cast", "casting", "channel" }
 R.MomentLabels = { cast = "Cast", casting = "Casting", channel = "Channeling" }
 

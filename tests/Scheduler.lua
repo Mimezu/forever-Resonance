@@ -68,6 +68,7 @@ R.Initialize = function(self) self.DB = {}; self.Profile = { enabled = true } en
 R.BuildLibrary = function() end
 R.DiscoverRanks = function() scans = scans + 1 end
 R.RefreshUI = function() end
+assert(loadfile('Interface/AddOns/Resonance/Options.lua'))('Resonance', R)
 assert(loadfile('Interface/AddOns/Resonance/Core.lua'))('Resonance', R)
 local event = R.EventFrame.scripts.OnEvent
 event(nil, 'ADDON_LOADED', 'Resonance')

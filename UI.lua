@@ -237,6 +237,7 @@ end
 
 function UI:UpdateModal()
     local open = (self.library and self.library:IsShown()) or (self.sets and self.sets:IsShown())
+        or (self.settings and self.settings:IsShown())
     if open and not self.modalShield then
         local shield = CreateFrame("Frame", nil, self.main)
         shield:SetAllPoints()
@@ -475,12 +476,13 @@ function UI:CreateMain()
     tooltip(self.enable, "Turn all Resonance sounds on or off.")
     local libraryButton = button(header, "Sound library", 0, 0, 122, function() UI:OpenLibrary() end)
     local setsButton = button(header, "Sound sets", 0, 0, 108, function() UI:OpenSets() end)
+    local settingsButton = button(header, "Settings", 0, 0, 90, function() UI:OpenSettings() end)
     local stopButton = button(header, "Stop", 0, 0, 64, function() R:StopAll() end)
     tooltip(stopButton, "Stop sounds Resonance is playing.")
     stopButton:ClearAllPoints()
     stopButton:SetPoint("TOPRIGHT", -(MAIN_W - EDITOR_X - EDITOR_W), BAND_Y + 12.5)
     local neighbor = stopButton
-    for _, control in ipairs({ setsButton, libraryButton, self.enable }) do
+    for _, control in ipairs({ setsButton, libraryButton, self.enable, settingsButton }) do
         control:ClearAllPoints()
         control:SetPoint("RIGHT", neighbor, "LEFT", -6, 0)
         neighbor = control
@@ -597,6 +599,7 @@ function UI:CreateMain()
         if UI.menu then UI.menu:Hide() end
         if UI.library then UI.library:Hide() end
         if UI.sets then UI.sets:Hide() end
+        if UI.settings then UI.settings:Hide() end
     end)
 end
 
@@ -606,7 +609,7 @@ function UI:SetSkin(id)
     local shown = self.main and self.main:IsShown()
     if self.main then self.main:Hide() end
     if self.menu then self.menu:Hide() end
-    self.main, self.library, self.sets, self.menu, self.modalShield = nil, nil, nil, nil, nil
+    self.main, self.library, self.sets, self.settings, self.menu, self.modalShield = nil, nil, nil, nil, nil, nil
     self:CreateMain()
     if shown then
         self.main:Show()
@@ -890,6 +893,7 @@ end
 
 function UI:OpenLibrary(callback)
     if self.sets then self.sets:Hide() end
+    if self.settings then self.settings:Hide() end
     if not self.library then self:CreateLibrary() end
     self.onChooseSound = callback
     self.library:Show()
@@ -912,6 +916,7 @@ local SETS_W, SETS_H, SETS_RIGHT = 840, 508, 820
 
 function UI:OpenSets()
     if self.library then self.library:Hide() end
+    if self.settings then self.settings:Hide() end
     if not self.sets then
         local f = frame(self.main, SETS_W, SETS_H, "window", "ResonanceForeverSets")
         R.Theme:Header(f, HEADER)
@@ -987,6 +992,38 @@ function UI:OpenSets()
     self.sets:Show()
     self:RefreshSetIdentity()
     self.setStatus:SetText("Save updates “" .. (R.Profile.activeSetName or "Default") .. "”. Use Save as to save under the name above.")
+    self:UpdateModal()
+end
+
+-- Settings dialog: the toggle key and the minimap icon.
+local SETTINGS_W, SETTINGS_H = 420, 190
+function UI:OpenSettings()
+    if self.library then self.library:Hide() end
+    if self.sets then self.sets:Hide() end
+    if not self.settings then
+        local f = frame(self.main, SETTINGS_W, SETTINGS_H, "window", "ResonanceForeverSettings")
+        R.Theme:Header(f, HEADER)
+        self.settings = f
+        f:SetPoint("CENTER")
+        f:SetFrameLevel(self.main:GetFrameLevel() + 30)
+        f:EnableMouse(true)
+        local heading = dialogHeading(f, "Settings", "")
+        closeButton(heading, function() f:Hide() end)
+        local controlX, controlW = 200, SETTINGS_W - 20 - 200
+        text(f, "Open Resonance", LEFT, TOP - 6, controlX - LEFT - GAP)
+        self.keycap = R:Keycap(button(f, "", controlX, TOP, controlW))
+        text(f, "Minimap icon", LEFT, TOP - 39, controlX - LEFT - GAP)
+        self.minimapToggle = button(f, "", controlX, TOP - 33, controlW, function()
+            R:SetMinimapShown(not R:MinimapShown())
+        end)
+        R:OnMinimapChanged(function()
+            if UI.minimapToggle then UI.minimapToggle:SetText(R:MinimapShown() and "On" or "Off") end
+        end)
+        f:SetScript("OnHide", function() UI:UpdateModal() end)
+    end
+    self.minimapToggle:SetText(R:MinimapShown() and "On" or "Off")
+    self.settings:Show()
+    R:RefreshKeys()
     self:UpdateModal()
 end
 

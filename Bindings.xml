@@ -1,0 +1,5 @@
+<Bindings>
+    <Binding name="RESONANCEFOREVER_TOGGLE" header="RESONANCEFOREVER">
+        ResonanceForever:ToggleUI()
+    </Binding>
+</Bindings>

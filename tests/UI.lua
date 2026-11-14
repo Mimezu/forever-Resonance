@@ -59,6 +59,10 @@ for _, method in ipairs({ "SetBackdrop", "SetBackdropColor", "SetBackdropBorderC
     Methods[method] = function() end
 end
 function Methods:SetPropagateKeyboardInput(value) self.propagate = value end
+function Methods:EnableKeyboard(enabled) self.keyboard = enabled end
+function Methods:RegisterForClicks(...) self.clicks = { ... } end
+function Methods:SetChecked(checked) self.checked = checked and true or false end
+function Methods:GetChecked() return self.checked end
 function Methods:SetAlpha(alpha) self.alpha = alpha end
 function Methods:GetParent() return self.parent end
 function Methods:IsEnabled() return self.enabled ~= false end
@@ -102,7 +106,34 @@ GetCursorInfo = function() end
 PlaySoundFile = function() return true, 1 end
 PlaySound = PlaySoundFile
 StopSound = function() end
-for _, file in ipairs({ "Model", "API", "BossVoices", "Catalog", "Library", "Audio", "Sharing", "Theme", "UI", "Core" }) do
+-- Key bindings, minimap and the game's Settings.
+local bindings, savedBindings, registeredCategory = {}, 0, nil
+GetBindingKey = function(action)
+    local keys = {}
+    for key, bound in pairs(bindings) do if bound == action then keys[#keys + 1] = key end end
+    table.sort(keys)
+    return unpack(keys)
+end
+GetBindingAction = function(key) return bindings[key] or "" end
+GetBindingText = function(key) return key end
+SetBinding = function(key, action) bindings[key] = action; return true end
+SaveBindings = function() savedBindings = savedBindings + 1 end
+GetCurrentBindingSet = function() return 1 end
+IsAltKeyDown = function() return false end
+IsShiftKeyDown = function() return false end
+local ctrlDown = false
+IsControlKeyDown = function() return ctrlDown end
+GameTooltip = make("GameTooltip")
+function GameTooltip:SetOwner() end
+GetCursorPosition = function() return 0, 100 end
+Minimap = make("Frame"); Minimap:SetSize(140, 140)
+function Minimap:GetCenter() return 0, 0 end
+function Minimap:GetEffectiveScale() return 1 end
+Settings = {
+    RegisterCanvasLayoutCategory = function(panel, name) return { panel = panel, name = name } end,
+    RegisterAddOnCategory = function(category) registeredCategory = category end,
+}
+for _, file in ipairs({ "Model", "API", "BossVoices", "Catalog", "Library", "Audio", "Sharing", "Theme", "UI", "Options", "Core" }) do
     assert(loadfile(root .. file .. ".lua"))("Resonance", R)
 end
 R.EventFrame.scripts.OnEvent(nil, "ADDON_LOADED", "Resonance")
@@ -285,5 +316,60 @@ SlashCmdList.RESONANCEFOREVER("style z")
 assert(R.DB.skin == "C", "unknown style is ignored")
 SlashCmdList.RESONANCEFOREVER("style a")
 assert(R.DB.skin == "A")
-print("PASS: editor construction, rank edits, library, sets, removal/undo, filters, lifecycle, pooled refresh, layout, styles")
+-- Toggle key, minimap button and Settings page.
+bindings["CTRL-R"] = "REPLY"
+_G.BINDING_NAME_REPLY = "Reply"
+R.UI:OpenSettings()
+assert(R.UI.settings:IsShown() and R.UI.modalShield:IsShown(), "settings dialog is modal")
+assert(R.UI.keycap:GetText() == "Not set")
+click(R.UI.keycap)
+assert(R.UI.keycap:GetText() == "Press a key…", "keycap listens")
+R.UI.keycap.scripts.OnKeyDown(R.UI.keycap, "LCTRL")
+assert(R.UI.keycap:GetText() == "Press a key…", "a modifier alone keeps listening")
+ctrlDown = true
+R.UI.keycap.scripts.OnKeyDown(R.UI.keycap, "R")
+ctrlDown = false
+assert(bindings["CTRL-R"] == R.TOGGLE_BINDING and savedBindings == 1, "key bound and saved")
+assert(R.UI.keycap:GetText() == "CTRL-R" and not R.UI.keycap.scripts.OnKeyDown, "listening ends")
+click(R.UI.keycap)
+R.UI.keycap.scripts.OnKeyDown(R.UI.keycap, "ESCAPE")
+assert(bindings["CTRL-R"] == R.TOGGLE_BINDING and R.UI.keycap:GetText() == "CTRL-R", "Escape cancels")
+click(R.UI.keycap)
+R.UI.keycap.scripts.OnKeyDown(R.UI.keycap, "F7")
+assert(bindings.F7 == R.TOGGLE_BINDING and bindings["CTRL-R"] == nil, "new key replaces the old one")
+R.UI.keycap.scripts.OnClick(R.UI.keycap, "RightButton")
+assert(GetBindingKey(R.TOGGLE_BINDING) == nil and R.UI.keycap:GetText() == "Not set", "right-click clears")
+InCombatLockdown = function() return true end
+assert(not R:BindToggleKey("F8") and bindings.F8 == nil, "no key changes in combat")
+InCombatLockdown = function() return false end
+assert(R.minimapButton and R.minimapButton:IsShown() and R:MinimapShown(), "minimap icon shown by default")
+assert(R.UI.minimapToggle:GetText() == "On")
+click(R.UI.minimapToggle)
+assert(R.DB.minimap.hide and not R.minimapButton.shown and R.UI.minimapToggle:GetText() == "Off", "minimap icon hides and saves")
+assert(registeredCategory and registeredCategory.name == "Resonance", "Settings page registered")
+local panelCheck
+for _, f in ipairs(frames) do if f.kind == "CheckButton" then panelCheck = f end end
+assert(panelCheck.checked == false, "Settings checkbox follows the setting")
+panelCheck.checked = true; panelCheck.scripts.OnClick(panelCheck)
+assert(not R.DB.minimap.hide and R.minimapButton.shown and R.UI.minimapToggle:GetText() == "On", "Settings checkbox shows the icon")
+R.minimapButton.scripts.OnDragStart(R.minimapButton)
+R.minimapButton.scripts.OnUpdate(R.minimapButton)
+assert(math.abs(R.DB.minimap.angle - 90) < 0.001, "dragging saves the angle")
+R.minimapButton.scripts.OnDragStop(R.minimapButton)
+R.UI.main:Hide()
+R.minimapButton.scripts.OnClick(R.minimapButton)
+assert(R.UI.main:IsShown(), "minimap icon opens the window")
+R.UI.main:Hide()
+local openButton
+for _, f in ipairs(frames) do if f.kind == "Button" and f.value == "Open" and f.parent == registeredCategory.panel then openButton = f end end
+click(openButton)
+for _, fn in ipairs(pendingTimers) do fn() end
+pendingTimers = {}
+assert(R.UI.main:IsShown(), "Settings Open opens the window")
+SlashCmdList.RESONANCEFOREVER("settings")
+assert(R.UI.main:IsShown() and R.UI.settings:IsShown(), "/res settings")
+R.UI:OpenSets()
+assert(not R.UI.settings:IsShown(), "one dialog at a time")
+R.UI.sets:Hide()
+print("PASS: editor construction, rank edits, library, sets, removal/undo, filters, lifecycle, pooled refresh, layout, styles, toggle key, minimap, Settings page")
 print("Library entries: " .. #R.Library)

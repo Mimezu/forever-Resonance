@@ -25,6 +25,7 @@ local function initialize()
     R.build = tostring(version) .. ":" .. tostring(build)
     R:BuildLibrary()
     R:DiscoverRanks()
+    R:InitOptions()
     for _, event in ipairs({ "UNIT_SPELLCAST_START", "UNIT_SPELLCAST_STOP", "UNIT_SPELLCAST_SUCCEEDED",
         "UNIT_SPELLCAST_CHANNEL_START", "UNIT_SPELLCAST_CHANNEL_STOP", "UNIT_SPELLCAST_INTERRUPTED",
         "UNIT_SPELLCAST_FAILED", "UNIT_SPELLCAST_FAILED_QUIET" }) do
@@ -49,8 +50,10 @@ local function initialize()
             if not R.Theme:Label(id) then print("Resonance: /res style a, b, or c (Classic, Legacy, Flat)."); return end
             if R.UI.main then R.UI:SetSkin(id) else R.DB.skin = R.Theme:Use(id) end
             print("Resonance style: " .. R.Theme:Label(id))
+        elseif message == "settings" then
+            R:OpenUI(); R.UI:OpenSettings()
         elseif message == "help" then
-            print("Resonance: /res opens the editor. Drag an action into the empty slot, add sounds, and customize ranks if desired. /res stop, /res on, /res off, /res style a|b|c.")
+            print("Resonance: /res opens the editor. Drag an action into the empty slot, add sounds, and customize ranks if desired. /res stop, /res on, /res off, /res style a|b|c, /res settings.")
         else R:ToggleUI() end
     end
 end
@@ -67,6 +70,7 @@ events:SetScript("OnEvent", function(_, event, ...)
         if R.pendingScan then QueueScan() end
     elseif event == "PLAYER_LOGOUT" then R:SyncActiveSet(); R:StopAll()
     elseif event == "PLAYER_DEAD" then R:StopAll()
+    elseif event == "UPDATE_BINDINGS" then R:RefreshKeys()
     elseif event == "PLAYER_ENTERING_WORLD" then R:StopAll(); QueueScan()
     else R:OnSpellEvent(event, ...) end
 end)

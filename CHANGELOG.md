@@ -1,3 +1,10 @@
+# 2.1.0-forever.13
+
+- Toggle key: "Open Resonance" in the game's key bindings, also set from the new **Settings** dialog (toolbar). Click the keycap and press a key; Esc cancels, right-click clears. Refused in combat; warns when the key did something else.
+- Minimap icon: opens the window, drag to move around the minimap, on by default. Toggle in Settings.
+- Page in Esc > Options > AddOns > Resonance: Open, `/res`, the toggle key, Minimap icon.
+- `/res settings` opens the Settings dialog.
+
 # 2.0.0-forever.12
 
 Review for the live client (build 70707):
