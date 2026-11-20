@@ -53,7 +53,6 @@ local function stopCapture()
     button:EnableKeyboard(false)
     R:RefreshKeys()
 end
-R.StopKeyCapture = stopCapture
 
 -- Listens for the next key: modifiers combine, Escape cancels.
 function R:CaptureToggleKey(button)
