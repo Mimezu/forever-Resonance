@@ -135,6 +135,7 @@ function R:FindCard(spellID)
     local noCard = self.NoCard
     if noCard and noCard[spellID] then return end
     local name, _, ranked = self:SpellIdentity(spellID)
+    if not name then return end -- data not loaded yet: do not remember a miss
     card = ranked and self.RankedNames[name]
     if not card then
         if noCard then noCard[spellID] = true end

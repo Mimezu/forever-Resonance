@@ -97,8 +97,10 @@ end
 
 function R:DiscoverRanks()
     if not self.Profile then return end
+    if not (self.RankedNames and next(self.RankedNames)) then return end
     -- Most spellbook entries belong to no ranked card; identify them cheaply and
     -- read tooltip data only for a new rank of a configured spell family.
+    local changed = false
     local function visit(id)
         if type(id) ~= "number" then return end
         local name, rank, ranked = self:SpellIdentity(id)
@@ -110,7 +112,10 @@ function R:DiscoverRanks()
             return
         end
         local info = self:SpellInfo(id)
-        if info then card.ranks[id] = { label = info.rank, mode = info.mode } end
+        if info then
+            card.ranks[id] = { label = info.rank, mode = info.mode }
+            changed = true
+        end
     end
     local book = C_SpellBook
     if book and book.GetNumSpellBookSkillLines then
@@ -133,7 +138,8 @@ function R:DiscoverRanks()
             end
         end
     end
-    self:Reindex()
+    -- A new rank must reach BySpell; a label refresh keeps the miss cache.
+    if changed then self:Reindex() end
 end
 
 function R:DropAction(section)
