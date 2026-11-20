@@ -1,6 +1,6 @@
 # Resonance for Forever
 
-Version 2.1.0-forever.13 · client interface 16001
+Version 2.1.1-forever.14 · client interface 16001
 
 ## Opening
 
