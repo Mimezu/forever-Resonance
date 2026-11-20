@@ -1,3 +1,9 @@
+# 2.1.1-forever.14
+
+- Spell changes no longer rescan the spellbook when no card has ranks.
+- Unconfigured casts stay cached across spell changes; spells whose data has not loaded yet are not cached.
+- Removed an unused export.
+
 # 2.1.0-forever.13
 
 - Toggle key: "Open Resonance" in the game's key bindings, also set from the new **Settings** dialog (toolbar). Click the keycap and press a key; Esc cancels, right-click clears. Refused in combat; warns when the key did something else.
