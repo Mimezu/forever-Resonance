@@ -148,6 +148,14 @@ local custom = R:AddCustomSound("kit", 8, "Custom hit")
 check(custom and R:Preview(custom.key), "custom sound kit plays")
 R.DB.favorites[custom.key] = true
 check(#R:SoundResults("custom", "custom", true, true) == 1, "search, category, favorites and playback filters")
+check(R:IsCustomSound(custom.key) and not R:IsCustomSound("file:1"), "own sounds recognised")
+check(R:RenameCustomSound(custom.key, "  Renamed hit ") and R.SoundByKey[custom.key].label == "Renamed hit", "rename own sound")
+check(#R:SoundResults("renamed", "custom") == 1, "renamed sound searchable")
+R:RenameCustomSound(custom.key, "Custom hit")
+local spare = R:AddCustomSound("file", 4242, "Spare")
+R.DB.favorites[spare.key] = true
+check(R:RemoveCustomSound(spare.key) and not R.SoundByKey[spare.key] and not R.DB.favorites[spare.key], "remove own sound")
+check(not R:RemoveCustomSound("file:4242"), "remove twice is harmless")
 R.build = "test:2"
 check(#R:SoundResults("custom", "custom", true, true) == 0, "sound checks scoped to client build")
 local exported = R:ExportSet()

@@ -58,6 +58,35 @@ function R:AddCustomSound(kind, id, label)
     return self.SoundByKey[key]
 end
 
+local function customIndex(key)
+    for i, sound in ipairs(R.DB.customSounds) do
+        if R.SoundKey(sound) == key then return i, sound end
+    end
+end
+
+function R:IsCustomSound(key)
+    return customIndex(key) ~= nil
+end
+
+function R:RenameCustomSound(key, label)
+    local _, sound = customIndex(key)
+    if not sound then return nil end
+    label = (label or ""):match("^%s*(.-)%s*$")
+    sound.label = label ~= "" and label:sub(1, 100) or (sound.kind .. " #" .. sound.id)
+    self:BuildLibrary()
+    return self.SoundByKey[key]
+end
+
+-- Layers that use the sound keep playing it; only the library entry goes.
+function R:RemoveCustomSound(key)
+    local index = customIndex(key)
+    if not index then return false end
+    table.remove(self.DB.customSounds, index)
+    self.DB.favorites[key] = nil
+    self:BuildLibrary()
+    return true
+end
+
 function R:PlayKey(key)
     local kind, id
     if type(key) == "string" then kind, id = key:match("^(%a+):(%d+)$") end

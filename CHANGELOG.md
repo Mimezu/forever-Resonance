@@ -1,3 +1,8 @@
+# 2.2.0-forever.15
+
+- Sound library: **Added by you** category for your own sounds.
+- Edit on your own sounds: rename or remove. Actions using a removed sound keep playing it.
+
 # 2.1.1-forever.14
 
 - Spell changes no longer rescan the spellbook when no card has ranks.

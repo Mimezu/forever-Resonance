@@ -749,13 +749,13 @@ function UI:CreateLibrary()
     self.librarySearch:SetScript("OnTextChanged", function() UI.libraryPage = 0; UI:RefreshLibrary() end)
     placeholder(self.librarySearch, "Search sounds…")
     self.categoryButton = button(f, "All categories", 356, TOP, 224, function(self)
-        local entries = { { label = "All categories", value = "all" }, { label = "Custom", value = "custom" } }
+        local entries = { { label = "All categories", value = "all" }, { label = "Added by you", value = "custom" } }
         for _, cat in ipairs(R.SoundCategories) do
             if cat.id ~= "favorites" then entries[#entries + 1] = { label = cat.label, value = cat.id } end
         end
         UI:Menu(self, entries, function(value)
             UI.category, UI.libraryPage = value, 0
-            UI.categoryButton:SetText(value == "all" and "All categories" or value == "custom" and "Custom" or R.SoundCategoryByID[value].label)
+            UI.categoryButton:SetText(value == "all" and "All categories" or value == "custom" and "Added by you" or R.SoundCategoryByID[value].label)
             UI:RefreshLibrary()
         end, UI.category or "all")
     end)
@@ -794,10 +794,14 @@ function UI:CreateLibrary()
         row.star:ClearAllPoints()
         row.star:SetPoint("RIGHT", row.preview, "LEFT", -6, 0)
         tooltip(row.star, "Save or remove this sound from your favorites.")
+        row.edit = button(row, "Edit", 0, -10, 64, function()
+            UI:EditCustomSound(UI.editingKey ~= row.sound.key and row.sound.key or nil)
+        end)
+        row.edit:ClearAllPoints()
+        row.edit:SetPoint("RIGHT", row.star, "LEFT", -6, 0)
         row.state = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         row.state:SetWidth(84)
         row.state:SetJustifyH("CENTER")
-        row.state:SetPoint("RIGHT", row.star, "LEFT", -10, 0)
         singleLine(row.state)
         self.soundRows[i] = row
     end
@@ -831,7 +835,19 @@ function UI:CreateLibrary()
     placeholder(self.customName, "Name your sound")
     tooltip(self.customID, "Add a client FileDataID or SoundKit ID to your library.")
     tooltip(self.customName, "A name for your custom sound.")
-    button(f, "Add to library", 728, fieldY, LIB_RIGHT - 728, function()
+    local actionW = (LIB_RIGHT - 728 - 6) / 2
+    self.renameSound = button(f, "Rename", 728, fieldY, actionW, function()
+        local key = UI.editingKey
+        if R:RenameCustomSound(key, UI.customName:GetText()) then R:Status("Renamed.") end
+        UI:EditCustomSound(nil)
+    end)
+    self.removeSound = button(f, "Remove", 728 + actionW + 6, fieldY, actionW, function()
+        local label = R:SoundLabel(UI.editingKey)
+        if R:RemoveCustomSound(UI.editingKey) then R:Status("Removed " .. label .. ".") end
+        UI:EditCustomSound(nil)
+    end)
+    tooltip(self.removeSound, "Actions using it keep playing it.")
+    self.addSound = button(f, "Add to library", 728, fieldY, LIB_RIGHT - 728, function()
         local sound, err = R:AddCustomSound(UI.customKind or "file", UI.customID:GetText(), UI.customName:GetText())
         if not sound then R:Status(err); return end
         UI.category, UI.favoritesOnly, UI.playableOnly, UI.libraryPage = "all", false, false, 0
@@ -847,12 +863,39 @@ function UI:CreateLibrary()
     f:SetScript("OnHide", function()
         R:StopPreview()
         if UI.menu then UI.menu:Hide() end
+        if UI.editingKey then UI:EditCustomSound(nil) end
         UI:UpdateModal()
     end)
+    self:EditCustomSound(nil)
     f:EnableMouseWheel(true)
     f:SetScript("OnMouseWheel", function(_, delta)
         UI.libraryPage = math.max(0, UI.libraryPage - delta); UI:RefreshLibrary()
     end)
+end
+
+-- The add form doubles as the edit form for a sound added by you.
+function UI:EditCustomSound(key)
+    local sound = key and R.SoundByKey[key]
+    if sound and not R:IsCustomSound(key) then sound = nil end
+    local wasEditing = self.editingKey ~= nil
+    self.editingKey = sound and key or nil
+    self.customType:SetEnabled(not sound)
+    self.customID:SetEnabled(not sound)
+    self.addSound:SetShown(not sound)
+    self.renameSound:SetShown(sound ~= nil)
+    self.removeSound:SetShown(sound ~= nil)
+    if sound then
+        self.customKind = sound.kind
+        self.customType:SetText(sound.kind == "kit" and "Kit ID" or "File ID")
+        self.customID:SetText(tostring(sound.id))
+        self.customName:SetText(sound.label)
+        self.customName:SetFocus()
+    elseif wasEditing then
+        self.customID:SetText("")
+        self.customName:SetText("")
+        self.customName:ClearFocus()
+    end
+    self:RefreshLibrary()
 end
 
 function UI:RefreshLibrary()
@@ -877,13 +920,18 @@ function UI:RefreshLibrary()
             if STATE_COLORS[state] then row.state:SetTextColor(unpack(STATE_COLORS[state]))
             else row.state:SetTextColor(R.Theme:Color("muted")) end
             row.star:SetText(R.DB.favorites[sound.key] and "Saved" or "Favorite")
+            local own = sound.category == "custom" and R:IsCustomSound(sound.key)
+            row.edit:SetShown(own)
+            row.edit:SetText(self.editingKey == sound.key and "Cancel" or "Edit")
+            row.state:ClearAllPoints()
+            row.state:SetPoint("RIGHT", own and row.edit or row.star, "LEFT", -10, 0)
             row.choose:SetEnabled(choosing)
             row.choose:SetShown(choosing)
             -- Browse mode drops Choose; the other controls close up to the edge.
             row.preview:ClearAllPoints()
             if choosing then row.preview:SetPoint("RIGHT", row.choose, "LEFT", -6, 0)
             else row.preview:SetPoint("TOPRIGHT", -10, -10) end
-            local width = LIB_RIGHT - LEFT - 10 - 64 - 6 - 84 - 10 - 84 - 10 - (choosing and 106 or 0) - 10
+            local width = LIB_RIGHT - LEFT - 10 - 64 - 6 - 84 - 10 - 84 - 10 - (choosing and 106 or 0) - (own and 70 or 0) - 10
             row.label:SetWidth(width)
             row.detail:SetWidth(width)
         end
